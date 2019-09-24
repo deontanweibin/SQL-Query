@@ -1,0 +1,9 @@
+select acct_natly, count(acct_id) as UU, 
+sum(count(acct_id)) over () Total_UU,
+--round(100*(count(acct_id)/ sum(count(acct_id)) over ()),2) as UU_P
+round(count(acct_id)/ sum(count(acct_id)) over (),4) as UU_P
+from EDWDM.TEDW_SINGCASH_ACCOUNT 
+where acct_vfy_lvl is not NULL
+and acct_vfy_lvl not like '%Remittance%'
+group by acct_natly
+order by count(acct_id) desc
