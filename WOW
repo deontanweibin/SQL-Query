@@ -1,0 +1,15 @@
+with republic as (
+SELECT txn_dt, txn_id, dest_acct_ownr_name,dest_acct_name, acct_msisdn, orig_amt, trunc(txn_dt,'iw')  as Week_Txn,
+rank() over (partition by acct_msisdn order by txn_id)  as rank
+FROM EDWDM.TEDW_SINGCASH_SALESJOURNAL_DOM
+     WHERE SVC_CLASS_NAME IN('P2M',
+                        'P2M Pinless')
+      AND STAT = 'PST'
+      and trunc(txn_dt, 'iw')  = to_date('12-Aug-2019','DD-Mon-YY')
+      AND TXN_DT between to_date('15-Jul-2019','DD-Mon-YY') and to_date('18-Aug-2019','DD-Mon-YY')
+      and orig_amt > 0.09
+      and brnd_name like '%Food Republic%'
+      and data_txn_rfnd = 'False'
+      order by txn_id asc) 
+      select * 
+      from republic where rank < 6
