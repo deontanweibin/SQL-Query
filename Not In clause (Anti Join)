@@ -1,0 +1,19 @@
+Select scr_acct_id
+from(
+Select distinct scr_acct_id
+FROM EDWDM.TEDW_SINGCASH_SALESJOURNAL_DOM a
+WHERE SVC_CLASS_NAME IN('P2M','P2M Pinless')
+and orig_amt > 0.09
+and data_txn_rfnd = 'False'
+and upper(brnd_name) like '%NETS%'
+AND STAT = 'PST'
+AND TXN_DT between to_date('01-Nov-2019','DD-Mon-YY') and to_date('01-Dec-2019','DD-Mon-YY')
+)
+where scr_acct_id not in
+(select distinct scr_acct_id
+from EDWDM.TEDW_SINGCASH_SALESJOURNAL_DOM
+where TXN_DT between to_date('01-Nov-2019','DD-Mon-YY') and to_date('01-Dec-2019','DD-Mon-YY')
+and upper(brnd_name) not like '%NETS%'
+and orig_amt > 0.09
+and (SVC_CLASS_NAME NOT like '%Auto%weep%' OR SVC_CLASS_NAME NOT like '%Adjustment%')
+);
