@@ -1,0 +1,13 @@
+SELECT to_char(txn_dt, 'Mon-YYYY') as Txn_Mth, count(distinct scr_acct_id) as UU ,sum(orig_amt) as TV, count(orig_amt) as TC, round(avg(orig_amt),2) as Avg_$,round(sum(orig_amt)/count(distinct scr_acct_id),2) as ARPU,round(count(orig_amt)/count(distinct scr_acct_id))as ACPU
+FROM EDWDM.TEDW_SINGCASH_SALESJOURNAL_DOM
+     WHERE SVC_CLASS_NAME IN('P2M',
+                        'P2M Pinless')
+      AND STAT = 'PST'
+      AND TXN_DT between to_date('01-Jul-2019','DD-Mon-YY') and to_date('01-Nov-2019','DD-Mon-YY')
+      --AND txn_dt BETWEEN trunc (sysdate, 'mm')/*current month*/ AND SYSDATE
+      --AND txn_dt BETWEEN trunc (sysdate -1, 'mm')/*current month*/ AND SYSDATE
+      and orig_amt > 0.09
+      and data_txn_rfnd = 'False'
+      and upper(brnd_name) like '%NETS%'
+      group by to_char(txn_dt, 'Mon-YYYY')
+      order by to_char(txn_dt, 'Mon-YYYY') asc
