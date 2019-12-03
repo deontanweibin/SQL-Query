@@ -1,0 +1,40 @@
+with base as
+(
+Select Txn_Months, Channel, sum(orig_amt) as TV , count(orig_amt) as TC
+from 
+(
+Select to_char(txn_dt, 'Mon-YYYY') as Txn_Months,
+(case
+WHEN ((brnd_grp LIKE '%Prepaid Topup%' OR brnd_name like '%Singtel Bill%' OR brnd_name like '%hiPrepaid%') AND STAT LIKE '%PST%') THEN 'Singtel Services' 
+WHEN (SVC_CLASS_NAME IN('P2M','P2M Pinless') AND (brnd_name not like '%Singtel Bill%' OR brnd_name not like '%hiPrepaid%') AND STAT = 'PST')  THEN 'P2M'  
+WHEN (brnd_id IN ('313','314','112','111','317','318','319','320') AND STAT in ('PST','SBM')) THEN 'VPC Domestic' 
+--WHEN (brnd_id IN ('314','112') AND STAT in ('PST','SBM')) THEN 'Domestic VPC Online' 
+--WHEN (brnd_id IN ('313','111','317','318','319','320') AND STAT in ('PST','SBM')) THEN 'Domestic VPC Paywave' 
+WHEN (SVC_CLASS_NAME IN('P2P') AND STAT = 'PST') THEN 'P2P'
+WHEN (brnd_grp like '%International Money Remittance%' And (STAT = 'PST' OR STAT = 'PST7' OR STAT = 'PST9')) THEN 'Remittance'
+WHEN (brnd_id IN ('3900','3901','3902','3903') AND STAT IN ('PST')) THEN 'VIA'
+WHEN (brnd_id IN ('312','316') AND STAT in ('PST','SBM'))  THEN 'International VPC eCommerce' 
+WHEN (brnd_id IN ('311','315') AND STAT in ('PST','SBM'))  THEN 'International VPC Paywave' 
+end) as Channel ,
+orig_amt, brnd_grp, brnd_name, svc_class_name, brnd_id, stat
+FROM EDWDM.TEDW_SINGCASH_SALESJOURNAL_DOM
+WHERE (SVC_CLASS_NAME NOT like '%AutoSweep%' AND SVC_CLASS_NAME NOT like '%Adjustment%')
+AND ORIG_AMT > 0.09
+AND (SVC_CLASS_NAME IN('P2M','P2M Pinless', 'P2P', 'SingTel Prepaid Top Up','ISO8583 Visa Paywave','ISO8583 Visa Online')
+OR brnd_grp like '%International Money Remittance%'
+OR brnd_id in ('311','312','313', '314','315','316','112','111'))
+AND ACCT_MSISDN != '6583381170' 
+AND ACCT_MSISDN != '6597727199'
+AND ACCT_MSISDN != '6596510899'
+AND ACCT_MSISDN > '6580000000'
+AND data_txn_rfnd = 'False'
+AND STAT in ('PST','SBM','PST7','PST9')
+AND TXN_DT between to_date('01-Jan-2019','DD-Mon-YY') and to_date('01-Oct-2019','DD-Mon-YY')
+)
+where Channel is not NULL
+group by Txn_Months, Channel
+)
+Select Txn_Months, Channel,
+round(TV/sum(TV) over (partition by TXN_MONTHS),9) as TV_Percentage,
+round(TC/sum(TC) over (partition by TXN_MONTHS),9) as TC_Percentage
+from base
