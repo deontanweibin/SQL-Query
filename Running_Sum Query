@@ -1,0 +1,7 @@
+SELECT txn_dt, scr_acct_id,orig_amt, sum(orig_amt) over (partition by scr_acct_id order by txn_dt) as Running_Amt
+FROM EDWDM.TEDW_SINGCASH_SALESJOURNAL_DOM
+WHERE STAT in ('PST','SBM')
+AND TXN_DT between to_date('01-Aug-2019','DD-Mon-YY') and to_date('01-Sep-2019','DD-Mon-YY')
+AND orig_amt > 0.09
+AND (SVC_CLASS_NAME NOT like '%Auto%weep%' OR SVC_CLASS_NAME NOT like '%Adjustment%')
+AND brnd_id IN ('311','312','313','314','315','316','112','111','3720','3721','317','318','319','320')
