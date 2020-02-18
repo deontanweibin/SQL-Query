@@ -1,0 +1,238 @@
+SELECT *
+FROM
+(
+SELECT d.Cashin_Place,d.Month_Year,d.orig_amt --,COUNT(distinct d.dest_cust_id) AS unique_users, d.orig_amt --,SUM(d.orig_amt) AS sum_amt, COUNT(d.orig_amt) AS txns, COUNT(DISTINCT d.dest_cust_id) AS unique_users 
+FROM
+(
+SELECT 
+(CASE
+WHEN c.brnd_name LIKE '%711%'
+THEN '7E'
+WHEN c.brnd_name LIKE '%AXS%'
+THEN 'AXS'
+WHEN c.brnd_name LIKE '%Credit Card%'
+THEN 'Credit Card Cashin'
+WHEN c.brnd_name LIKE '%Lucky Plaza%' OR c.brnd_name LIKE '%City Plaza%'
+THEN 'SingCash'
+WHEN c.brnd_name LIKE '%eNETS%'
+THEN 'eNETS'
+WHEN c.brnd_name LIKE '%.SRV%' OR c.brnd_name LIKE '%SMS Mobile HQ%'
+THEN 'SingTel Roadshow'
+WHEN c.brnd_name LIKE '%Erajaya%' OR (c.brnd_name LIKE '%.SER%' AND c.brnd_name NOT LIKE '%SMS Mobile HQ%')
+THEN 'SERs'
+WHEN c.brnd_name LIKE '%Operator Bill%'
+THEN 'Singtel Bill'
+WHEN c.brnd_name LIKE '%.HelloShop%' OR c.brnd_name LIKE '%SingShop%'
+THEN 'SingTel Shop'
+ELSE 
+'Kiosk'
+END
+) Cashin_Place,c.Month_Year, c.orig_amt,c.dest_cust_id
+FROM
+(
+SELECT a.dest_cust_id,a.dest_msisdn, a.brnd_name, to_char(a.txn_dt, 'Mon-YYYY') AS Month_Year, a. orig_amt
+--to_char(txn_dt, 'MM-YYYY'),count(distinct dest_msisdn), sum(orig_amt), count(txn_id)
+FROM EDWDM.TEDW_SINGCASH_SALESJOURNAL_DOM A
+INNER JOIN EDWDM.TEDW_SINGCASH_ACCOUNT B
+on a.dest_cust_id = b.ACCT_id
+WHERE (a.SVC_CLASS_NAME NOT like '%Auto%weep%' OR a.SVC_CLASS_NAME NOT like '%Adjustment%')
+AND a.TXN_DT BETWEEN to_date('1-Jan-2018','DD-Mon-YY') AND to_date('19-Aug-2019','DD-Mon-YY')
+AND a.DATA_TXN_RFND='False'
+AND (a.STAT = 'PST' OR a.STAT = 'PST7' OR a.STAT = 'PST9')
+AND a.BRND_GRP_ID IN ('2','27')
+--AND DEST_MSISDN != MAKER_REF
+AND a.DEST_MSISDN != '6583381170' 
+AND a.DEST_MSISDN != '6597727199'
+AND a.DEST_MSISDN != '6596510899'
+and a.dest_msisdn > '6580000000'
+   --And  b.ACCT_STAT= 'A'
+--AND   b.acct_trst_lvl LIKE '%Remittance%'
+) c
+) d
+--GROUP BY d.Cashin_Place, d.Month_Year
+)
+PIVOT 
+( count(orig_amt) --SUM(unique_users) --when want to sum(orig_amt) or count(orig_amt), remove COUNT(distinct d.dest_cust_id) AS unique_users from 4th line from top of this query and replace it with d.orig_amt, and remove GROUP BY d.Cashin_Place, d.Month_Year from 7th line from bottom of this query
+FOR Month_Year IN ('Jan-2018','Feb-2018','Mar-2018','Apr-2018','May-2018','Jun-2018','Jul-2018','Aug-2018','Sep-2018','Oct-2018','Nov-2018','Dec-2018','Jan-2019','Feb-2019','Mar-2019','Apr-2019','May-2019','Jun-2019','Jul-2019','Aug-2019')
+)
+ORDER BY cashin_place
+
+
+--##YEAR##
+SELECT *
+FROM
+(
+SELECT d.Cashin_Place,d.orig_amt, d.txn_year --d.Month_Year,COUNT(distinct d.dest_cust_id) AS unique_users, d.orig_amt --,SUM(d.orig_amt) AS sum_amt, COUNT(d.orig_amt) AS txns, COUNT(DISTINCT d.dest_cust_id) AS unique_users 
+FROM
+(
+SELECT 
+(CASE
+WHEN c.brnd_name LIKE '%711%'
+THEN '7E'
+WHEN c.brnd_name LIKE '%AXS%'
+THEN 'AXS'
+WHEN c.brnd_name LIKE '%Credit Card%'
+THEN 'Credit Card Cashin'
+WHEN c.brnd_name LIKE '%Lucky Plaza%' OR c.brnd_name LIKE '%City Plaza%'
+THEN 'SingCash'
+WHEN c.brnd_name LIKE '%eNETS%'
+THEN 'eNETS'
+WHEN c.brnd_name LIKE '%.SRV%' OR c.brnd_name LIKE '%SMS Mobile HQ%'
+THEN 'SingTel Roadshow'
+WHEN c.brnd_name LIKE '%Erajaya%' OR (c.brnd_name LIKE '%.SER%' AND c.brnd_name NOT LIKE '%SMS Mobile HQ%')
+THEN 'SERs'
+WHEN c.brnd_name LIKE '%Operator Bill%'
+THEN 'Singtel Bill'
+WHEN c.brnd_name LIKE '%.HelloShop%' OR c.brnd_name LIKE '%SingShop%'
+THEN 'SingTel Shop'
+ELSE 
+'Kiosk'
+END
+) Cashin_Place,c.Month_Year, c.orig_amt,c.dest_cust_id, c.txn_year
+FROM
+(
+SELECT  a.dest_cust_id,a.dest_msisdn, a.brnd_name, to_char(a.txn_dt, 'Mon-YYYY') AS Month_Year, a. orig_amt, to_char(a.txn_dt, 'YYYY') AS txn_year
+--to_char(txn_dt, 'MM-YYYY'),count(distinct dest_msisdn), sum(orig_amt), count(txn_id)
+FROM EDWDM.TEDW_SINGCASH_SALESJOURNAL_DOM A
+INNER JOIN EDWDM.TEDW_SINGCASH_ACCOUNT B
+on a.dest_cust_id = b.ACCT_id
+WHERE (a.SVC_CLASS_NAME NOT like '%Auto%weep%' OR a.SVC_CLASS_NAME NOT like '%Adjustment%')
+AND a.TXN_DT BETWEEN to_date('1-Jan-2014','DD-Mon-YY') AND to_date('1-Jan-2019','DD-Mon-YY')
+AND a.DATA_TXN_RFND='False'
+AND (a.STAT = 'PST' OR a.STAT = 'PST7' OR a.STAT = 'PST9')
+AND a.BRND_GRP_ID IN ('2','27')
+--AND DEST_MSISDN != MAKER_REF
+AND a.DEST_MSISDN != '6583381170' 
+AND a.DEST_MSISDN != '6597727199'
+AND a.DEST_MSISDN != '6596510899'
+and a.dest_msisdn > '6580000000'
+--AND brnd_name LIKE '%711%'
+   --And  b.ACCT_STAT= 'A'
+AND   b.acct_trst_lvl LIKE '%Remittance%'
+) c
+) d
+--GROUP BY d.Cashin_Place, d.Month_Year
+)
+PIVOT 
+( sum(orig_amt) --SUM(unique_users) --when want to sum(orig_amt) or count(orig_amt), remove COUNT(distinct d.dest_cust_id) AS unique_users from 4th line from top of this query and replace it with d.orig_amt, and remove GROUP BY d.Cashin_Place, d.Month_Year from 7th line from bottom of this query
+--FOR Month_Year IN ('Jan-2018','Feb-2018','Mar-2018','Apr-2018','May-2018','Jun-2018','Jul-2018','Aug-2018','Sep-2018','Oct-2018','Nov-2018','Dec-2018','Jan-2019')
+FOR txn_year IN ('2014','2015','2016','2017','2018')
+)
+ORDER BY cashin_place
+
+
+--year
+SELECT *
+FROM
+(
+SELECT d.Cashin_Place,d.orig_amt, d.txn_year --d.Month_Year,COUNT(distinct d.dest_cust_id) AS unique_users, d.orig_amt --,SUM(d.orig_amt) AS sum_amt, COUNT(d.orig_amt) AS txns, COUNT(DISTINCT d.dest_cust_id) AS unique_users 
+FROM
+(
+SELECT 
+(CASE
+WHEN c.brnd_name LIKE '%711%'
+THEN '7E'
+WHEN c.brnd_name LIKE '%AXS%'
+THEN 'AXS'
+WHEN c.brnd_name LIKE '%Credit Card%'
+THEN 'Credit Card Cashin'
+WHEN c.brnd_name LIKE '%Lucky Plaza%' OR c.brnd_name LIKE '%City Plaza%'
+THEN 'SingCash'
+WHEN c.brnd_name LIKE '%eNETS%'
+THEN 'eNETS'
+WHEN c.brnd_name LIKE '%.SRV%' OR c.brnd_name LIKE '%SMS Mobile HQ%'
+THEN 'SingTel Roadshow'
+WHEN c.brnd_name LIKE '%Erajaya%' OR (c.brnd_name LIKE '%.SER%' AND c.brnd_name NOT LIKE '%SMS Mobile HQ%')
+THEN 'SERs'
+WHEN c.brnd_name LIKE '%Operator Bill%'
+THEN 'Singtel Bill'
+WHEN c.brnd_name LIKE '%.HelloShop%' OR c.brnd_name LIKE '%SingShop%'
+THEN 'SingTel Shop'
+ELSE 
+'Kiosk'
+END
+) Cashin_Place,c.Month_Year, c.orig_amt,c.dest_cust_id, c.txn_year
+FROM
+(
+SELECT  a.dest_cust_id,a.dest_msisdn, a.brnd_name, to_char(a.txn_dt, 'Mon-YYYY') AS Month_Year, a. orig_amt, to_char(a.txn_dt, 'YYYY') AS txn_year
+--to_char(txn_dt, 'MM-YYYY'),count(distinct dest_msisdn), sum(orig_amt), count(txn_id)
+FROM EDWDM.TEDW_SINGCASH_SALESJOURNAL_DOM A
+INNER JOIN EDWDM.TEDW_SINGCASH_ACCOUNT B
+on a.dest_cust_id = b.ACCT_id
+WHERE (a.SVC_CLASS_NAME NOT like '%Auto%weep%' OR a.SVC_CLASS_NAME NOT like '%Adjustment%')
+AND a.TXN_DT BETWEEN to_date('1-Jan-2014','DD-Mon-YY') AND to_date('1-Jan-2019','DD-Mon-YY')
+AND a.DATA_TXN_RFND='False'
+AND (a.STAT = 'PST' OR a.STAT = 'PST7' OR a.STAT = 'PST9')
+AND a.BRND_GRP_ID IN ('2','27')
+--AND DEST_MSISDN != MAKER_REF
+AND a.DEST_MSISDN != '6583381170' 
+AND a.DEST_MSISDN != '6597727199'
+AND a.DEST_MSISDN != '6596510899'
+and a.dest_msisdn > '6580000000'
+--AND brnd_name LIKE '%711%'
+   --And  b.ACCT_STAT= 'A'
+AND   b.acct_trst_lvl LIKE '%Remittance%'
+) c
+) d
+--GROUP BY d.Cashin_Place, d.Month_Year
+)
+PIVOT 
+( sum(orig_amt) --SUM(unique_users) --when want to sum(orig_amt) or count(orig_amt), remove COUNT(distinct d.dest_cust_id) AS unique_users from 4th line from top of this query and replace it with d.orig_amt, and remove GROUP BY d.Cashin_Place, d.Month_Year from 7th line from bottom of this query
+--FOR Month_Year IN ('Jan-2018','Feb-2018','Mar-2018','Apr-2018','May-2018','Jun-2018','Jul-2018','Aug-2018','Sep-2018','Oct-2018','Nov-2018','Dec-2018','Jan-2019')
+FOR txn_year IN ('2014','2015','2016','2017','2018')
+)
+ORDER BY cashin_place
+
+--BIWEEKLY DATA------
+SELECT d.Cashin_Place,d.Month_Year,SUM(d.orig_amt),COUNT(d.orig_amt) --,COUNT(distinct d.dest_cust_id) AS unique_users, d.orig_amt --,SUM(d.orig_amt) AS sum_amt, COUNT(d.orig_amt) AS txns, COUNT(DISTINCT d.dest_cust_id) AS unique_users 
+FROM
+(
+SELECT 
+(CASE
+WHEN c.brnd_name LIKE '%711%'
+THEN '7E'
+WHEN c.brnd_name LIKE '%AXS%'
+THEN 'AXS'
+WHEN c.brnd_name LIKE '%Credit Card%'
+THEN 'Credit Card Cashin'
+WHEN c.brnd_name LIKE '%Lucky Plaza%' OR c.brnd_name LIKE '%City Plaza%'
+THEN 'SingCash'
+WHEN c.brnd_name LIKE '%eNETS%'
+THEN 'eNETS'
+WHEN c.brnd_name LIKE '%.SRV%' OR c.brnd_name LIKE '%SMS Mobile HQ%'
+THEN 'SingTel Roadshow'
+WHEN c.brnd_name LIKE '%Erajaya%' OR (c.brnd_name LIKE '%.SER%' AND c.brnd_name NOT LIKE '%SMS Mobile HQ%')
+THEN 'SERs'
+WHEN c.brnd_name LIKE '%Operator Bill%'
+THEN 'Singtel Bill'
+WHEN c.brnd_name LIKE '%.HelloShop%' OR c.brnd_name LIKE '%SingShop%'
+THEN 'SingTel Shop'
+ELSE 
+'Kiosk'
+END
+) Cashin_Place,c.Month_Year, c.orig_amt,c.dest_cust_id
+FROM
+(
+SELECT a.dest_cust_id,a.dest_msisdn, a.brnd_name, to_char(a.txn_dt, 'Mon-YYYY') AS Month_Year, a. orig_amt
+--to_char(txn_dt, 'MM-YYYY'),count(distinct dest_msisdn), sum(orig_amt), count(txn_id)
+FROM EDWDM.TEDW_SINGCASH_SALESJOURNAL_DOM A
+INNER JOIN EDWDM.TEDW_SINGCASH_ACCOUNT B
+on a.dest_cust_id = b.ACCT_id
+WHERE (a.SVC_CLASS_NAME NOT like '%Auto%weep%' OR a.SVC_CLASS_NAME NOT like '%Adjustment%')
+AND a.TXN_DT BETWEEN to_date('1-Jan-2018','DD-Mon-YY') AND to_date('1-Jul-2019','DD-Mon-YY')
+AND a.DATA_TXN_RFND='False'
+AND (a.STAT = 'PST' OR a.STAT = 'PST7' OR a.STAT = 'PST9')
+AND a.BRND_GRP_ID IN ('2','27')
+--AND DEST_MSISDN != MAKER_REF
+AND a.DEST_MSISDN != '6583381170' 
+AND a.DEST_MSISDN != '6597727199'
+AND a.DEST_MSISDN != '6596510899'
+and a.dest_msisdn > '6580000000'
+   --And  b.ACCT_STAT= 'A'
+AND   b.acct_trst_lvl LIKE '%Remittance%'
+) c
+) d
+GROUP BY d.Cashin_Place, d.Month_Year
+
+
+
